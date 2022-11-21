@@ -3,6 +3,10 @@ from ast import literal_eval
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
+# class ProductAttributes(models.Model):
+#     _name = 'product.attributes'
+
+#     attributes = fields.One2many('product.attribute', 'attributes', string='Attributes')
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
@@ -46,6 +50,14 @@ class ProductAttribute(models.Model):
         ("binary", "Attachment"),
         ("date", "Date"),
         ("datetime", "DateTime"),
+        ("computed_field", "Computed Field"),
+    ]
+
+    OPERATORS = [
+        ("+", "+"),
+        ("-", "-"),
+        ("/", "/"),
+        ("*", "*"),
     ]
 
     active = fields.Boolean(
@@ -57,38 +69,29 @@ class ProductAttribute(models.Model):
     min_val = fields.Integer(string="Min Value", help="Minimum value allowed")
     max_val = fields.Integer(string="Max Value", help="Maximum value allowed")
 
+    # computed_input1  = fields.Many2many('product.attributes', 'product_attributes_rel', 'attribute_id', 'attributes_id', string="Product Attributes")
+    computed_input1  = fields.Many2one('product.attribute', string="Product Attribute1")
+    computed_input2  = fields.Many2one('product.attribute', string="Product Attribute2")
+    computed_input3  = fields.Many2one('product.attribute', string="Product Attribute3")
+    # computed_input3  = fields.Many2many('product.attribute.value', string="Product Attributes")
+
+    operator1 = fields.Selection(selection=OPERATORS,  string="Operator1",  help="The type of the custom field generated in the frontend",)
+    operator2 = fields.Selection(selection=OPERATORS,  string="Operator2",  help="The type of the custom field generated in the frontend",)
+    
+
     # TODO: Exclude self from result-set of dependency
-    val_custom = fields.Boolean(
-        string="Custom Value", help="Allow custom value for this attribute?"
-    )
-    custom_type = fields.Selection(
-        selection=CUSTOM_TYPES,
-        string="Field Type",
-        help="The type of the custom field generated in the frontend",
-    )
+    val_custom = fields.Boolean(string="Custom Value", help="Allow custom value for this attribute?")
+    custom_type = fields.Selection(selection=CUSTOM_TYPES, string="Field Type", help="The type of the custom field generated in the frontend")
     description = fields.Text(string="Description", translate=True)
-    search_ok = fields.Boolean(
-        string="Searchable",
-        help="When checking for variants with "
-        "the same configuration, do we "
-        "include this field in the search?",
-    )
-    required = fields.Boolean(
-        string="Required",
-        default=True,
-        help="Determines the required value of this "
-        "attribute though it can be change on "
-        "the template level",
-    )
-    multi = fields.Boolean(
-        string="Multi",
-        help="Allow selection of multiple values for " "this attribute?",
-    )
+    search_ok = fields.Boolean(string="Searchable", help="When checking for variants with " "the same configuration, do we include this field in the search?")
+    required = fields.Boolean(string="Required", default=True, help="Determines the required value of this attribute though it can be change on the template level")
+    multi = fields.Boolean(string="Multi", help="Allow selection of multiple values for " "this attribute?",)
     uom_id = fields.Many2one(comodel_name="uom.uom", string="Unit of Measure")
     image = fields.Binary(string="Image")
 
     # TODO prevent the same attribute from being defined twice on the
     # attribute lines
+
 
     @api.constrains("custom_type", "search_ok")
     def check_searchable_field(self):
@@ -235,6 +238,8 @@ class ProductAttributeLine(models.Model):
 
 class ProductAttributeValue(models.Model):
     _inherit = "product.attribute.value"
+
+    # sale_order_value = fields.Many2one('sale.order.line', string="Product Attributes")
 
     def copy(self, default=None):
         """Add ' (Copy)' in name to prevent attribute
